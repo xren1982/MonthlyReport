@@ -99,7 +99,7 @@ def generateReport():
         word.replace_doc('{Current_Date}',getpreviousday(0)+' '+getpreviousmonthfullname(0)+' '+getpreviousyear(0))
         word.replace_doc('{LastMonth_LastDay}',getlastMonthlastDay())
         word.replace_doc('{Month}',getpreviousmonthfullname(1))
-        
+        print('Step 1 finished')
 
 # 
 #         
@@ -140,7 +140,7 @@ def generateReport():
         word.replace_doc('{DownTimeDays}',format(DownTimeDays,'.0f'))
         word.replace_doc('{AdjustedEnergyNumber}',format(AdjustedEnergyNumber,',.0f'))
         word.replace_doc('{AllInvertersNumber}',format(AllInvertersNumber,'.1f'))
-        
+        print('Step 2 finished')
            
         
         df2 = pandas.read_excel(resourcePath2, 'Sheet2', dtype=object,skiprows=5)
@@ -175,7 +175,7 @@ def generateReport():
         
         word.replace_doc('{NetPRVarNumber}',format(NetPRVarNumberForWord,'.1f')) 
         word.replace_doc('{belowOrAbove2}',belowOrAbove)
-        
+        print('Step 3 finished')
          
         excel = easyexcel.EasyExcel()
         excel.open(resourcePath2)
@@ -202,7 +202,9 @@ def generateReport():
         
         excelrange = excel.getRange(2, 4, 1, rownumber2, 16)
         
-        word.copyTableFromExcelToWordAsPicture(excelrange, 'Table_2')           
+        word.copyTableFromExcelToWordAsPicture(excelrange, 'Table_2')
+        
+        print('Step 4 finished')           
         
         df3 = pandas.read_csv(resourcePath3, dtype=object,sep=',',error_bad_lines=False,encoding='gb18030')
         
@@ -220,10 +222,11 @@ def generateReport():
         print(TotalEnergyNumber)
                 
         word.replace_doc('{TotalEnergyNumber}',format(TotalEnergyNumber,',.0f'))  
-
+        print('Step 5 finished')
         
     except Exception as e:
        print("general function error happen")
+       print(e)
     finally:
        word.close()
        excel.close(0)
