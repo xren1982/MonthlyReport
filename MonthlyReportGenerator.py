@@ -40,7 +40,7 @@ def getlastMonthlastDayInExcel(span):
 
 def getPreviousMonthFullInExcel(span):
     previousmonth = datetime.date.today() - relativedelta(months=+span)
-    return str(previousmonth.year)+'-'+str(previousmonth.month).rjust(2, '0')+'-01'
+    return str(previousmonth.year)+'-'+str(previousmonth.month).rjust(2, '0')
 
 def getpreviousMonthSub(span):
     months = "JanFebMarAprMayJunJulAugSepOctNovDec"
