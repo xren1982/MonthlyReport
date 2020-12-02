@@ -11,6 +11,7 @@ import datetime
 from dateutil.relativedelta import relativedelta
 import calendar
 import pandas
+from dateutil import rrule
 
 
 def getpreviousmonthfullname(span):
@@ -25,13 +26,15 @@ def getpreviousday(span):
     previousmonth = datetime.date.today() - relativedelta(months=+span)        
     return str(previousmonth.day).rjust(2, '0')
 
-def getlastMonthlastDay():
-    currentmonth = datetime.date.today()
+def getlastMonthlastDay(span):
+    span = span - 1
+    currentmonth = datetime.date.today() - relativedelta(months=+span)
     lastMonthlastDay = datetime.datetime(currentmonth.year, currentmonth.month, 1) - relativedelta(days=+1)        
-    return str(lastMonthlastDay.day).rjust(2, '0')+'-'+getpreviousMonthSub(1)+'-'+getpreviousyear(1)
+    return str(lastMonthlastDay.day).rjust(2, '0')+'-'+getpreviousMonthSub(span)+'-'+getpreviousyear(span)
 
-def getlastMonthlastDayInExcel():
-    currentmonth = datetime.date.today()
+def getlastMonthlastDayInExcel(span):
+    span = span - 1
+    currentmonth = datetime.date.today() - relativedelta(months=+span)
     lastMonthlastDay = datetime.datetime(currentmonth.year, currentmonth.month, 1) - relativedelta(days=+1)        
     return str(lastMonthlastDay.day)+'/'+str(lastMonthlastDay.month)+'/'+str(lastMonthlastDay.year)
 
@@ -46,6 +49,14 @@ def getpreviousMonthSub(span):
     return months[pos:pos+3]
 
 def generateReport():
+    
+    datestr = sys.argv[1] + '01'
+    print('Generate month report for:'+sys.argv[1])
+    
+    dateTime_p = datetime.datetime.strptime(datestr,'%Y%m%d')
+    span_p = dateTime_p - datetime.datetime.now()
+    
+    span = rrule.rrule(rrule.MONTHLY, dtstart=dateTime_p, until=datetime.datetime.now()).count() - 1
     
     print('Prepare the template start')
     work_dir = os.path.dirname(os.path.abspath(__file__))
@@ -94,12 +105,12 @@ def generateReport():
     try:
       
         word = easyword.EasyWord(reportpath)
-        word.replace_doc('{Month_Year}',getpreviousmonthfullname(1)+' '+getpreviousyear(1))
-        word.replace_footer('{Month_Year}',getpreviousmonthfullname(1)+' '+getpreviousyear(1))
+        word.replace_doc('{Month_Year}',getpreviousmonthfullname(span)+' '+getpreviousyear(span))
+        word.replace_footer('{Month_Year}',getpreviousmonthfullname(span)+' '+getpreviousyear(span))
         word.replace_doc('{Current_Date}',getpreviousday(0)+' '+getpreviousmonthfullname(0)+' '+getpreviousyear(0))
-        word.replace_doc('{LastMonth_LastDay}',getlastMonthlastDay())
-        word.replace_doc('{Month}',getpreviousmonthfullname(1))
-        print('Step 1 finished')
+        word.replace_doc('{LastMonth_LastDay}',getlastMonthlastDay(span))
+        word.replace_doc('{Month}',getpreviousmonthfullname(span))
+        
 
 # 
 #         
@@ -140,7 +151,7 @@ def generateReport():
         word.replace_doc('{DownTimeDays}',format(DownTimeDays,'.0f'))
         word.replace_doc('{AdjustedEnergyNumber}',format(AdjustedEnergyNumber,',.0f'))
         word.replace_doc('{AllInvertersNumber}',format(AllInvertersNumber,'.1f'))
-        print('Step 2 finished')
+        
            
         
         df2 = pandas.read_excel(resourcePath2, 'Sheet2', dtype=object,skiprows=5)
@@ -153,9 +164,10 @@ def generateReport():
         
         rownumber2 = 0
         currentrownumber2 = 6
+
         for i in df2.index:
             currentrownumber2 = currentrownumber2 + 1
-            if getPreviousMonthFullInExcel(1) in str(df2[df2.columns[0]].at[i]):
+            if getPreviousMonthFullInExcel(span) in str(df2[df2.columns[0]].at[i]):
                 VarNumber = df2[df2.columns[4]].at[i]
                 NetPRVarNumber = df2[df2.columns[7]].at[i] - df2[df2.columns[8]].at[i]
                 rownumber2 = currentrownumber2
@@ -175,7 +187,7 @@ def generateReport():
         
         word.replace_doc('{NetPRVarNumber}',format(NetPRVarNumberForWord,'.1f')) 
         word.replace_doc('{belowOrAbove2}',belowOrAbove)
-        print('Step 3 finished')
+        
          
         excel = easyexcel.EasyExcel()
         excel.open(resourcePath2)
@@ -202,9 +214,7 @@ def generateReport():
         
         excelrange = excel.getRange(2, 4, 1, rownumber2, 16)
         
-        word.copyTableFromExcelToWordAsPicture(excelrange, 'Table_2')
-        
-        print('Step 4 finished')           
+        word.copyTableFromExcelToWordAsPicture(excelrange, 'Table_2')           
         
         df3 = pandas.read_csv(resourcePath3, dtype=object,sep=',',error_bad_lines=False,encoding='gb18030')
         
@@ -213,7 +223,7 @@ def generateReport():
         
 
         for i in df3.index:
-            if getlastMonthlastDayInExcel() in str(df3[df3.columns[0]].at[i]):
+            if getlastMonthlastDayInExcel(span) in str(df3[df3.columns[0]].at[i]):
                 print(df3[df3.columns[1]].at[i])
                 print(df3[df3.columns[3]].at[i])
                 TotalEnergyNumber = int(df3[df3.columns[1]].at[i]) + int(df3[df3.columns[3]].at[i])
@@ -222,7 +232,7 @@ def generateReport():
         print(TotalEnergyNumber)
                 
         word.replace_doc('{TotalEnergyNumber}',format(TotalEnergyNumber,',.0f'))  
-        print('Step 5 finished')
+
         
     except Exception as e:
        print("general function error happen")
